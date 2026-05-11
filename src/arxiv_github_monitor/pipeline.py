@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+from html import escape
 import json
 from pathlib import Path
 
@@ -152,4 +154,158 @@ class Pipeline:
         for repo in payload["high_potential_repos"][:10]:
             lines.append(f"- {repo['repo']} — score {repo['score']}")
         (output_dir / "daily-report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        (output_dir / "dashboard.html").write_text(_render_dashboard_html(payload), encoding="utf-8")
         return payload
+
+
+def _render_dashboard_html(payload: dict) -> str:
+    repo_snapshots = payload.get("repo_latest_snapshots", {})
+    paper_by_repo: dict[str, dict] = {}
+    for paper in payload.get("new_papers_with_repos", []):
+        for repo in paper.get("repo_candidates", []):
+            paper_by_repo[repo] = paper
+
+    cards: list[tuple[float, str]] = []
+    for repo in payload.get("high_potential_repos", []):
+        repo_name = repo["repo"]
+        paper = paper_by_repo.get(repo_name, {})
+        snapshot = repo_snapshots.get(repo_name, {})
+        maintenance_score, maintenance_label = _maintenance_status(repo)
+        last_pushed = repo.get("last_pushed_at") or "unknown"
+        release_count = snapshot.get("release_count", 0)
+        stars = repo.get("current_stars", 0)
+        forks = repo.get("current_forks", 0)
+        issues = repo.get("current_open_issues", 0)
+        watchers = repo.get("current_watchers", 0)
+        score = repo.get("score", 0.0)
+        repo_url = f"https://github.com/{repo_name}"
+        paper_id = paper.get("paper_id") or repo.get("paper_id", "")
+        paper_title = paper.get("title") or repo.get("description") or repo_name
+        abs_url = paper.get("abs_url") or (f"https://arxiv.org/abs/{paper_id}" if paper_id else "")
+        pdf_url = paper.get("pdf_url") or (f"https://arxiv.org/pdf/{paper_id}.pdf" if paper_id else "")
+        categories = ", ".join(paper.get("categories", [])) or "unknown"
+        authors = ", ".join(paper.get("authors", [])[:6]) or "unknown"
+        summary = paper.get("summary", "")
+        summary = escape(summary[:320] + ("…" if len(summary) > 320 else ""))
+        pdf_link = f' · <a href="{escape(pdf_url)}">PDF</a>' if pdf_url else ""
+        cards.append(
+            (
+                maintenance_score,
+                f"""
+                <article class=\"card\" data-maintenance=\"{maintenance_score:.3f}\" data-stars=\"{stars}\" data-score=\"{score:.4f}\"> 
+                  <div class=\"card-header\">
+                    <div>
+                      <div class=\"eyebrow\">arXiv {escape(paper_id)}</div>
+                      <h2>{escape(paper_title)}</h2>
+                    </div>
+                    <div class=\"badges\">
+                      <span class=\"badge badge-maintenance\">维护度: {escape(maintenance_label)}</span>
+                      <span class=\"badge\">Rank score: {score:.4f}</span>
+                      <span class=\"badge\">Tier {escape(str(repo.get('tier', '?')))}</span>
+                    </div>
+                  </div>
+
+                  <p class=\"summary\">{summary or '暂无摘要'}</p>
+
+                  <div class=\"meta-grid\">
+                    <div><span>GitHub</span><strong><a href=\"{escape(repo_url)}\">{escape(repo_name)}</a></strong></div>
+                    <div><span>arXiv</span><strong><a href=\"{escape(abs_url)}\">Abstract</a>{pdf_link}</strong></div>
+                    <div><span>分类</span><strong>{escape(categories)}</strong></div>
+                    <div><span>作者</span><strong>{escape(authors)}</strong></div>
+                  </div>
+
+                  <div class=\"stats\">
+                    <div class=\"stat\"><span>Stars</span><strong>{stars}</strong></div>
+                    <div class=\"stat\"><span>Forks</span><strong>{forks}</strong></div>
+                    <div class=\"stat\"><span>Watchers</span><strong>{watchers}</strong></div>
+                    <div class=\"stat\"><span>Open issues</span><strong>{issues}</strong></div>
+                    <div class=\"stat\"><span>Releases</span><strong>{release_count}</strong></div>
+                    <div class=\"stat\"><span>Last push</span><strong>{escape(last_pushed)}</strong></div>
+                  </div>
+                </article>
+                """,
+            )
+        )
+
+    cards_html = "\n".join(card for _, card in sorted(cards, key=lambda item: item[0], reverse=True))
+    repo_count = len(payload.get("high_potential_repos", []))
+    paper_count = len(payload.get("new_papers_with_repos", []))
+    generated_at = escape(payload.get("generated_at", ""))
+    empty_html = '<div class="empty">当前还没有带 GitHub repo 的论文卡片。先继续跑 discover / run-all 即可。</div>'
+    return f"""<!DOCTYPE html>
+<html lang=\"zh-CN\">
+<head>
+  <meta charset=\"utf-8\" />
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+  <title>arXiv → GitHub Dashboard</title>
+  <style>
+    :root {{ color-scheme: dark; }}
+    body {{ margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; background: #0b1020; color: #e8ecf3; }}
+    .wrap {{ max-width: 1200px; margin: 0 auto; padding: 32px 20px 80px; }}
+    .hero {{ display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 24px; flex-wrap: wrap; }}
+    h1 {{ margin: 0; font-size: 32px; }}
+    .sub {{ color: #95a3b8; margin-top: 8px; }}
+    .toolbar {{ display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0 28px; }}
+    .pill {{ background: #151b31; border: 1px solid #29314d; color: #dbe6ff; border-radius: 999px; padding: 10px 14px; }}
+    .cards {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }}
+    .card {{ background: linear-gradient(180deg, #121933 0%, #0f152b 100%); border: 1px solid #27304d; border-radius: 18px; padding: 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.25); }}
+    .card-header {{ display: flex; justify-content: space-between; gap: 16px; align-items: start; margin-bottom: 14px; }}
+    .card h2 {{ margin: 4px 0 0; font-size: 20px; line-height: 1.35; }}
+    .eyebrow {{ color: #7aa2ff; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }}
+    .badges {{ display: flex; flex-direction: column; gap: 8px; align-items: end; }}
+    .badge {{ background: #1b2547; color: #dbe6ff; border-radius: 999px; padding: 6px 10px; font-size: 12px; white-space: nowrap; }}
+    .badge-maintenance {{ background: #173a31; color: #baf5df; }}
+    .summary {{ color: #b8c3d9; line-height: 1.6; min-height: 72px; }}
+    .meta-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }}
+    .meta-grid span, .stat span {{ display: block; color: #7f8aa3; font-size: 12px; margin-bottom: 4px; }}
+    .meta-grid strong, .stat strong {{ font-size: 14px; line-height: 1.4; }}
+    .stats {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }}
+    .stat {{ background: #0b1124; border: 1px solid #202946; border-radius: 14px; padding: 12px; }}
+    a {{ color: #9bc2ff; text-decoration: none; }}
+    a:hover {{ text-decoration: underline; }}
+    .empty {{ color: #95a3b8; padding: 24px; border: 1px dashed #2c3554; border-radius: 16px; }}
+    @media (max-width: 700px) {{ .meta-grid, .stats {{ grid-template-columns: 1fr; }} .badges {{ align-items: start; }} }}
+  </style>
+</head>
+<body>
+  <main class=\"wrap\">
+    <section class=\"hero\">
+      <div>
+        <h1>arXiv → GitHub 监控面板</h1>
+        <div class=\"sub\">卡片按 GitHub 维护度排序，便于快速进入 paper / repo 追踪。生成时间：{generated_at}</div>
+      </div>
+      <div class=\"toolbar\">
+        <div class=\"pill\">Papers with repo: {paper_count}</div>
+        <div class=\"pill\">Tracked repos: {repo_count}</div>
+      </div>
+    </section>
+    <section class=\"cards\">
+      {cards_html or empty_html}
+    </section>
+  </main>
+</body>
+</html>
+"""
+
+
+def _maintenance_status(repo: dict) -> tuple[float, str]:
+    if repo.get("archived"):
+        return 0.0, "Archived"
+    if repo.get("disabled"):
+        return 0.0, "Disabled"
+    last_pushed_at = repo.get("last_pushed_at")
+    if not last_pushed_at:
+        return 0.2, "Unknown"
+    try:
+        pushed = datetime.fromisoformat(str(last_pushed_at).replace("Z", "+00:00"))
+    except ValueError:
+        return 0.2, "Unknown"
+    now = datetime.now(timezone.utc)
+    days = max((now - pushed).total_seconds() / 86400, 0.0)
+    if days <= 14:
+        return 1.0, "Very active"
+    if days <= 45:
+        return 0.8, "Active"
+    if days <= 120:
+        return 0.5, "Cooling"
+    return 0.2, "Stale"

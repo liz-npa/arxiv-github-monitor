@@ -95,4 +95,8 @@ def test_pipeline_run_all_steps(tmp_path, monkeypatch) -> None:
     assert len(snapshots) == 1
     assert report["high_potential_repos"][0]["repo"] == "example/agentic-bench"
     assert (tmp_path / "output" / "daily-report.md").exists()
+    assert (tmp_path / "output" / "dashboard.html").exists()
+    dashboard_html = (tmp_path / "output" / "dashboard.html").read_text(encoding="utf-8")
+    assert "example/agentic-bench" in dashboard_html
+    assert "维护度" in dashboard_html
     assert (tmp_path / "state" / "papers.jsonl").exists()

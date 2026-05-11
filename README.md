@@ -14,11 +14,13 @@ This project tracks newly published arXiv papers, extracts linked GitHub reposit
 
 ```bash
 cd /Users/lizabethli/Documents/Projects/arxiv-github-monitor
-pytest
-PYTHONPATH=src python3 -m arxiv_github_monitor.cli run-all
-PYTHONPATH=src python3 -m arxiv_github_monitor.cli report
+python3.11 -m pytest
+PYTHONPATH=src python3.11 -m arxiv_github_monitor.cli run-all
+PYTHONPATH=src python3.11 -m arxiv_github_monitor.cli report
 make smoke
 ```
+
+> Requires Python 3.11+. On this machine, `python3` currently points to 3.9, so use `python3.11` explicitly.
 
 ## Optional auth
 

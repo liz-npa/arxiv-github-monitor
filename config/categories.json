@@ -1,3 +1,17 @@
 {
-  "categories": ["cs.LG", "cs.AI", "cs.CL", "cs.CV", "stat.ML"]
+  "categories": [
+    "cs.LG",
+    "cs.AI",
+    "cs.CL",
+    "cs.CV",
+    "stat.ML",
+    "cs.MA",
+    "cs.RO",
+    "cs.IR",
+    "cs.SE",
+    "cs.HC",
+    "cs.DB",
+    "cs.DC",
+    "cs.NE"
+  ]
 }
