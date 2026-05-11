@@ -8,4 +8,5 @@ def test_extract_github_urls_finds_repo_links() -> None:
 
 def test_normalize_github_repo_strips_suffixes() -> None:
     assert normalize_github_repo("https://github.com/Org/Repo.git?tab=readme") == "Org/Repo"
+    assert normalize_github_repo("https://github.com/Org/Repo.)") == "Org/Repo"
     assert normalize_github_repo("https://example.com/nope") is None

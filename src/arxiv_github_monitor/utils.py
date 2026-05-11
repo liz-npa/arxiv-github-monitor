@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import string
 from html.parser import HTMLParser
 from typing import Any
 from urllib.parse import urlparse
@@ -55,7 +56,8 @@ def normalize_github_repo(url: str) -> str | None:
     if len(parts) < 2:
         return None
     owner, repo = parts[0], parts[1]
-    repo = repo.removesuffix(".git")
+    owner = owner.strip().strip(string.punctuation)
+    repo = repo.removesuffix(".git").strip().strip(string.punctuation)
     if not owner or not repo:
         return None
     return f"{owner}/{repo}"

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from html import escape
 import json
 from pathlib import Path
+from urllib.error import HTTPError
 
 from .arxiv_client import ArxivClient
 from .config import load_config, AppConfig
@@ -97,7 +98,12 @@ class Pipeline:
         for paper in papers:
             for repo_name in paper.repo_candidates:
                 current_first_seen = repo_map[repo_name].first_seen_at if repo_name in repo_map else (to_iso(utcnow()) or "")
-                repo_record, snapshot = self.github_client.fetch_repo_metadata(repo_name, paper.paper_id, first_seen_at=current_first_seen)
+                try:
+                    repo_record, snapshot = self.github_client.fetch_repo_metadata(repo_name, paper.paper_id, first_seen_at=current_first_seen)
+                except HTTPError as exc:
+                    if exc.code == 404:
+                        continue
+                    raise
                 repo_record.tier = assign_repo_tier(repo_record, snapshot)
                 repo_record.score = compute_repo_score(repo_record, [*snapshots, snapshot], paper.topic_score)
                 repo_map[repo_name] = repo_record
@@ -113,10 +119,16 @@ class Pipeline:
         snapshots = load_repo_snapshots(self.config.root)
         repo_map = {repo.repo: repo for repo in existing_repos}
         new_snapshots: list[RepoSnapshot] = []
-        for repo_name, repo_record in repo_map.items():
+        for repo_name, repo_record in list(repo_map.items()):
             paper = papers.get(repo_record.paper_id)
             topic_score = paper.topic_score if paper else 0.0
-            refreshed_record, snapshot = self.github_client.fetch_repo_metadata(repo_name, repo_record.paper_id, first_seen_at=repo_record.first_seen_at)
+            try:
+                refreshed_record, snapshot = self.github_client.fetch_repo_metadata(repo_name, repo_record.paper_id, first_seen_at=repo_record.first_seen_at)
+            except HTTPError as exc:
+                if exc.code == 404:
+                    repo_map.pop(repo_name, None)
+                    continue
+                raise
             refreshed_record.tier = assign_repo_tier(refreshed_record, snapshot)
             refreshed_record.score = compute_repo_score(refreshed_record, [*snapshots, snapshot], topic_score)
             repo_map[repo_name] = refreshed_record

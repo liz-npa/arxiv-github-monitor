@@ -1,4 +1,5 @@
 from pathlib import Path
+from urllib.error import HTTPError
 
 from arxiv_github_monitor.models import PaperRecord, RepoRecord, RepoSnapshot, to_iso, utcnow
 from arxiv_github_monitor.pipeline import Pipeline
@@ -66,6 +67,13 @@ class FakeGitHubClient:
         return record, snapshot
 
 
+class FakeGitHubClientWith404(FakeGitHubClient):
+    def fetch_repo_metadata(self, repo: str, paper_id: str, first_seen_at: str | None = None):
+        if repo == "example/missing-repo":
+            raise HTTPError(f"https://api.github.com/repos/{repo}", 404, "Not Found", hdrs=None, fp=None)
+        return super().fetch_repo_metadata(repo, paper_id, first_seen_at=first_seen_at)
+
+
 def write_config(root: Path) -> None:
     (root / "config").mkdir(parents=True, exist_ok=True)
     (root / "config" / "categories.json").write_text('{"categories": ["cs.LG"]}\n', encoding="utf-8")
@@ -100,3 +108,30 @@ def test_pipeline_run_all_steps(tmp_path, monkeypatch) -> None:
     assert "example/agentic-bench" in dashboard_html
     assert "维护度" in dashboard_html
     assert (tmp_path / "state" / "papers.jsonl").exists()
+
+
+def test_poll_repos_skips_missing_github_repo(tmp_path) -> None:
+    write_config(tmp_path)
+    pipeline = Pipeline(tmp_path, arxiv_client=FakeArxivClient(), github_client=FakeGitHubClientWith404())
+    papers = [
+        PaperRecord(
+            paper_id="2505.54321",
+            version="v1",
+            title="Paper with one valid and one missing repo",
+            authors=["Alice"],
+            summary="",
+            categories=["cs.LG"],
+            published_at="2026-05-11T00:00:00Z",
+            updated_at="2026-05-11T00:00:00Z",
+            abs_url="https://arxiv.org/abs/2505.54321v1",
+            pdf_url="https://arxiv.org/pdf/2505.54321v1.pdf",
+            source="api",
+            repo_candidates=["example/agentic-bench", "example/missing-repo"],
+            topic_score=1.0,
+        )
+    ]
+
+    repos, snapshots = pipeline.poll_repos(papers)
+
+    assert [repo.repo for repo in repos] == ["example/agentic-bench"]
+    assert [snapshot.repo for snapshot in snapshots] == ["example/agentic-bench"]
