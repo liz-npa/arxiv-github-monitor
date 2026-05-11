@@ -1,0 +1,23 @@
+{
+  "max_feed_entries_per_category": 5,
+  "max_new_papers_per_run": 8,
+  "arxiv_polite_delay_seconds": 3,
+  "paper_topic_keywords": [
+    "agent",
+    "inference",
+    "evaluation",
+    "benchmark",
+    "training",
+    "reasoning",
+    "tool",
+    "framework",
+    "system",
+    "multimodal",
+    "retrieval",
+    "memory",
+    "code"
+  ],
+  "github_tier_a_hours": 6,
+  "github_tier_b_hours": 24,
+  "github_tier_c_hours": 168
+}

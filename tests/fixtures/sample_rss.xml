@@ -1,0 +1,11 @@
+<rss version="2.0">
+  <channel>
+    <title>arXiv cs.LG recent submissions</title>
+    <item>
+      <title>Agentic Benchmarks with Code</title>
+      <link>https://arxiv.org/abs/2505.12345v1</link>
+      <description>Paper summary with project page.</description>
+      <pubDate>Mon, 11 May 2026 00:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

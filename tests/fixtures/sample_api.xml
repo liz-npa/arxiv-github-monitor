@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <id>http://arxiv.org/abs/2505.12345v1</id>
+    <updated>2026-05-11T01:00:00Z</updated>
+    <published>2026-05-11T00:00:00Z</published>
+    <title>Agentic Benchmarks with Code</title>
+    <summary>We release code at https://github.com/example/agentic-bench .</summary>
+    <author><name>Alice</name></author>
+    <author><name>Bob</name></author>
+    <category term="cs.LG"/>
+    <category term="cs.AI"/>
+  </entry>
+</feed>
