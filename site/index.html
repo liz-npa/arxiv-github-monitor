@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>arXiv → GitHub Dashboard</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; background: #0b1020; color: #e8ecf3; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 32px 20px 80px; }
+    .hero { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 24px; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: 32px; }
+    .sub { color: #95a3b8; margin-top: 8px; }
+    .toolbar { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0 28px; }
+    .pill { background: #151b31; border: 1px solid #29314d; color: #dbe6ff; border-radius: 999px; padding: 10px 14px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+    .card { background: linear-gradient(180deg, #121933 0%, #0f152b 100%); border: 1px solid #27304d; border-radius: 18px; padding: 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+    .card-header { display: flex; justify-content: space-between; gap: 16px; align-items: start; margin-bottom: 14px; }
+    .card h2 { margin: 4px 0 0; font-size: 20px; line-height: 1.35; }
+    .eyebrow { color: #7aa2ff; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+    .badges { display: flex; flex-direction: column; gap: 8px; align-items: end; }
+    .badge { background: #1b2547; color: #dbe6ff; border-radius: 999px; padding: 6px 10px; font-size: 12px; white-space: nowrap; }
+    .badge-maintenance { background: #173a31; color: #baf5df; }
+    .summary { color: #b8c3d9; line-height: 1.6; min-height: 72px; }
+    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .meta-grid span, .stat span { display: block; color: #7f8aa3; font-size: 12px; margin-bottom: 4px; }
+    .meta-grid strong, .stat strong { font-size: 14px; line-height: 1.4; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .stat { background: #0b1124; border: 1px solid #202946; border-radius: 14px; padding: 12px; }
+    a { color: #9bc2ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .empty { color: #95a3b8; padding: 24px; border: 1px dashed #2c3554; border-radius: 16px; }
+    @media (max-width: 700px) { .meta-grid, .stats { grid-template-columns: 1fr; } .badges { align-items: start; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div>
+        <h1>arXiv → GitHub 监控面板</h1>
+        <div class="sub">当前是静态快照版本，先用于直接在 GitHub Pages 上查看卡片式页面。生成时间：2026-05-11T05:22:00Z</div>
+      </div>
+      <div class="toolbar">
+        <div class="pill">Papers with repo: 1</div>
+        <div class="pill">Tracked repos: 1</div>
+      </div>
+    </section>
+    <section class="cards">
+      <article class="card" data-maintenance="0.800" data-stars="2" data-score="0.7084">
+        <div class="card-header">
+          <div>
+            <div class="eyebrow">arXiv 2605.06679</div>
+            <h2>Breaking the Illusion: When Positive Meets Negative in Multimodal Decoding</h2>
+          </div>
+          <div class="badges">
+            <span class="badge badge-maintenance">维护度: Active</span>
+            <span class="badge">Rank score: 0.7084</span>
+            <span class="badge">Tier A</span>
+          </div>
+        </div>
+
+        <p class="summary">Vision-Language Models (VLMs) are frequently undermined by object hallucination, generating content that contradicts visual reality, due to an over-reliance on linguistic priors. We introduce Positive-and-Negative Decoding (PND), a training-free inference framework that intervenes directly in the decoding process to enforce visual fidelity.</p>
+
+        <div class="meta-grid">
+          <div><span>GitHub</span><strong><a href="https://github.com/JiangYubo4399/PND">JiangYubo4399/PND</a></strong></div>
+          <div><span>arXiv</span><strong><a href="https://arxiv.org/abs/2605.06679v1">Abstract</a> · <a href="https://arxiv.org/pdf/2605.06679v1.pdf">PDF</a></strong></div>
+          <div><span>分类</span><strong>cs.LG</strong></div>
+          <div><span>作者</span><strong>Yubo Jiang, Yitong An, Xin Yang, Abudukelimu Wuerkaixi, Xuxin Cheng, Fengying Xie</strong></div>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><span>Stars</span><strong>2</strong></div>
+          <div class="stat"><span>Forks</span><strong>0</strong></div>
+          <div class="stat"><span>Watchers</span><strong>0</strong></div>
+          <div class="stat"><span>Open issues</span><strong>0</strong></div>
+          <div class="stat"><span>Releases</span><strong>0</strong></div>
+          <div class="stat"><span>Last push</span><strong>2026-03-31T08:19:43Z</strong></div>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
